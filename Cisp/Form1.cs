@@ -1,15 +1,14 @@
+using Cisp.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Windows.Forms;
-using System.Configuration;
-using Microsoft.Data.SqlClient;
 using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace Cisp
 {
     public partial class Form1 : Form
     {
-        private readonly string connectionString =
-            ConfigurationManager.ConnectionStrings["ConnectString"].ConnectionString;
 
         public Form1()
         {
@@ -28,32 +27,27 @@ namespace Cisp
         private void LoadStudents()
         {
             SetupColumns(lstStudents,
-                ("ID", 40), ("Last Name", 100), ("First Name", 100), ("Middle Name", 100),
-                ("Address", 180), ("Phone", 100), ("Birth Date", 90), ("Scholarship", 90));
+    ("ID", 40), ("Last Name", 100), ("First Name", 100), ("Middle Name", 100),
+    ("Address", 180), ("Phone", 100), ("Birth Date", 90), ("Scholarship", 90));
 
-            string sql = @"SELECT StudentID, LastName, FirstName, MiddleName,
-                                   Address, Phone, BirthDate, Scholarship
-                            FROM Students
-                            ORDER BY LastName";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
-            {
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+            using (var db = new StudentContext())
+            
                 {
-                    lstStudents.Items.Clear();
-                    while (reader.Read())
-                    {
-                        ListViewItem item = new ListViewItem(reader["StudentID"].ToString());
-                        item.SubItems.Add(reader["LastName"].ToString());
-                        item.SubItems.Add(reader["FirstName"].ToString());
-                        item.SubItems.Add(reader["MiddleName"].ToString());
-                        item.SubItems.Add(reader["Address"].ToString());
-                        item.SubItems.Add(reader["Phone"].ToString());
-                        item.SubItems.Add(Convert.ToDateTime(reader["BirthDate"]).ToString("dd.MM.yyyy"));
 
-                        decimal scholarship = Convert.ToDecimal(reader["Scholarship"]);
+                var students = db.Students.OrderBy(x => x.LastName).ToList();
+                    lstStudents.Items.Clear();
+
+                    foreach (var student in students)
+                    {
+                        ListViewItem item = new ListViewItem(student.Id.ToString());
+                        item.SubItems.Add(student.LastName.ToString());
+                        item.SubItems.Add(student.FirstName.ToString());
+                        item.SubItems.Add(student.MiddleName.ToString());
+                        item.SubItems.Add(student.Address.ToString());
+                        item.SubItems.Add(student.Phone.ToString());
+                        item.SubItems.Add(student.BirthDate.ToString("dd.MM.yyyy"));
+
+                        decimal scholarship = Convert.ToDecimal(student.Scholarship);
                         item.SubItems.Add(scholarship.ToString("N2"));
                         if (scholarship == 0)
                             item.ForeColor = Color.Gray;
@@ -62,32 +56,27 @@ namespace Cisp
                     }
                 }
             }
-        }
+        
 
         private void LoadTeachers()
         {
             SetupColumns(lstTeachers,
                 ("ID", 40), ("Last Name", 120), ("First Name", 120), ("Middle Name", 120));
 
-            string sql = @"SELECT TeacherID, LastName, FirstName, MiddleName
-                            FROM Teachers
-                            ORDER BY LastName";
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
+
+            using (var db = new StudentContext())
             {
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+                var teachers = db.Teachers.OrderBy(x => x.LastName).ToList();
+                lstTeachers.Items.Clear();
+
+                foreach (var teacher in teachers)
                 {
-                    lstTeachers.Items.Clear();
-                    while (reader.Read())
-                    {
-                        ListViewItem item = new ListViewItem(reader["TeacherID"].ToString());
-                        item.SubItems.Add(reader["LastName"].ToString());
-                        item.SubItems.Add(reader["FirstName"].ToString());
-                        item.SubItems.Add(reader["MiddleName"].ToString());
-                        lstTeachers.Items.Add(item);
-                    }
+                    ListViewItem item = new ListViewItem(teacher.Id.ToString());
+                    item.SubItems.Add(teacher.LastName.ToString());
+                    item.SubItems.Add(teacher.FirstName.ToString());
+                    item.SubItems.Add(teacher.MiddleName.ToString());
+                    lstTeachers.Items.Add(item);
                 }
             }
         }
@@ -98,27 +87,22 @@ namespace Cisp
             SetupColumns(lstSubjects,
                 ("ID", 40), ("Subject", 180), ("Teacher", 180));
 
-            string sql = @"SELECT sub.SubjectID, sub.SubjectName,
-                                   t.LastName + ' ' + t.FirstName AS TeacherFullName
-                            FROM Subjects sub
-                            JOIN Teachers t ON sub.TeacherID = t.TeacherID";
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
+            using(var db = new StudentContext())
             {
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+                var subjects = db.Subjects.Include(s => s.Teacher).ToList();
+
+                lstSubjects.Items.Clear();
+
+                foreach(var subject in subjects)
                 {
-                    lstSubjects.Items.Clear();
-                    while (reader.Read())
-                    {
-                        ListViewItem item = new ListViewItem(reader["SubjectID"].ToString());
-                        item.SubItems.Add(reader["SubjectName"].ToString());
-                        item.SubItems.Add(reader["TeacherFullName"].ToString());
-                        lstSubjects.Items.Add(item);
-                    }
+                    ListViewItem item = new ListViewItem(subject.Id.ToString());
+                    item.SubItems.Add(subject.SubjectName.ToString());
+                    item.SubItems.Add(subject.Teacher.LastName + " " + subject.Teacher.FirstName);
+                    lstSubjects.Items.Add(item);
                 }
             }
+            
         }
 
 
@@ -127,79 +111,68 @@ namespace Cisp
             SetupColumns(lstGrades,
                 ("ID", 40), ("Student", 160), ("Subject", 140), ("Exam Date", 90), ("Grade", 60));
 
-            string sql = @"SELECT g.GradeID,
-                                   s.LastName + ' ' + s.FirstName AS StudentFullName,
-                                   sub.SubjectName,
-                                   g.ExamDate,
-                                   g.Grade
-                            FROM Grades g
-                            JOIN Students s ON g.StudentID = s.StudentID
-                            JOIN Subjects sub ON g.SubjectID = sub.SubjectID
-                            ORDER BY s.LastName, g.ExamDate";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
+            using(var db = new StudentContext())
             {
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+                var grades = db.Grades.
+                    Include(s => s.Student).
+                    Include(x => x.Subject).
+                    OrderBy(o => o.Id).
+                    ToList();
+
+                lstGrades.Items.Clear();
+
+                foreach(var grade in grades)
                 {
-                    lstGrades.Items.Clear();
-                    while (reader.Read())
-                    {
-                        ListViewItem item = new ListViewItem(reader["GradeID"].ToString());
-                        item.SubItems.Add(reader["StudentFullName"].ToString());
-                        item.SubItems.Add(reader["SubjectName"].ToString());
-                        item.SubItems.Add(Convert.ToDateTime(reader["ExamDate"]).ToString("dd.MM.yyyy"));
+                    ListViewItem item = new ListViewItem(grade.Id.ToString());
+                    item.SubItems.Add(grade.Student.LastName + " " + grade.Student.FirstName.ToString());
+                    item.SubItems.Add(grade.Subject.ToString());
+                    item.SubItems.Add(grade.ExamDate.ToString("dd.MM.yyyy"));
 
-                        int grade = Convert.ToInt32(reader["Grade"]);
-                        item.SubItems.Add(grade.ToString());
+                    int grade1 = Convert.ToInt32(grade.Grade);
+                    item.SubItems.Add(grade1.ToString());
 
-                        if (grade <= 2)
-                            item.ForeColor = Color.Red;
-                        else if (grade == 5)
-                            item.ForeColor = Color.Green;
+                    if (grade1 <= 2)
+                        item.ForeColor = Color.Red;
+                    else if (grade1 == 5)
+                        item.ForeColor = Color.Green;
 
-                        lstGrades.Items.Add(item);
-                    }
+                    lstGrades.Items.Add(item);
                 }
             }
-        }
 
+            
+            
+        
+        }
         private void LoadReport()
         {
             SetupColumns(lstReport,
                 ("Student", 160), ("Subject", 140), ("Exam Date", 90),
                 ("Grade", 60), ("Teacher", 160), ("Scholarship", 90));
 
-            string sql = @"SELECT s.LastName + ' ' + s.FirstName AS StudentFullName,
-                                   sub.SubjectName,
-                                   g.ExamDate,
-                                   g.Grade,
-                                   t.LastName + ' ' + t.FirstName AS TeacherFullName,
-                                   s.Scholarship
-                            FROM Grades g
-                            JOIN Students s ON g.StudentID = s.StudentID
-                            JOIN Subjects sub ON g.SubjectID = sub.SubjectID
-                            JOIN Teachers t ON sub.TeacherID = t.TeacherID
-                            ORDER BY s.LastName";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            using (SqlCommand command = new SqlCommand(sql, connection))
+            using (var db = new StudentContext())
             {
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+                var grades = db.Grades
+                    .Include(g => g.Student)
+                    .Include(g => g.Subject)
+                        .ThenInclude(s => s.Teacher)
+                    .OrderBy(g => g.Student.LastName)
+                    .ToList();
+
+                lstReport.Items.Clear();
+
+                foreach (var grade in grades)
                 {
-                    lstReport.Items.Clear();
-                    while (reader.Read())
-                    {
-                        ListViewItem item = new ListViewItem(reader["StudentFullName"].ToString());
-                        item.SubItems.Add(reader["SubjectName"].ToString());
-                        item.SubItems.Add(Convert.ToDateTime(reader["ExamDate"]).ToString("dd.MM.yyyy"));
-                        item.SubItems.Add(reader["Grade"].ToString());
-                        item.SubItems.Add(reader["TeacherFullName"].ToString());
-                        item.SubItems.Add(Convert.ToDecimal(reader["Scholarship"]).ToString("N2"));
-                        lstReport.Items.Add(item);
-                    }
+                    string studentFullName = grade.Student.LastName + " " + grade.Student.FirstName;
+                    string teacherFullName = grade.Subject.Teacher.LastName + " " + grade.Subject.Teacher.FirstName;
+
+                    ListViewItem item = new ListViewItem(studentFullName);
+                    item.SubItems.Add(grade.Subject.SubjectName);
+                    item.SubItems.Add(grade.ExamDate.ToString("dd.MM.yyyy"));
+                    item.SubItems.Add(grade.Grade.ToString());
+                    item.SubItems.Add(teacherFullName);
+                    item.SubItems.Add(grade.Student.Scholarship.ToString("N2"));
+                    lstReport.Items.Add(item);
                 }
             }
         }
