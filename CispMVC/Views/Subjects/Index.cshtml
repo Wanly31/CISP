@@ -1,0 +1,38 @@
+@model List<Subjects>
+@{
+    ViewData["Title"] = "Предмети";
+}
+
+<h2>Предмети</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<a asp-action="Create" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Назва</th>
+            <th>Викладач</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td>@s.SubjectName</td>
+                <td>@s.Teacher?.LastName @s.Teacher?.FirstName</td>
+                <td class="text-nowrap">
+                    <a asp-action="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <form asp-action="Delete" asp-route-id="@s.Id" method="post" class="d-inline" onsubmit="return confirm('Видалити?')">
+                        <button class="btn btn-sm btn-outline-danger">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

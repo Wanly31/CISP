@@ -1,0 +1,45 @@
+@model Students
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Новий студент" : "Редагування студента";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Save" method="post" style="max-width: 500px">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-2">
+        <label asp-for="LastName" class="form-label">Прізвище</label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+    <div class="mb-2">
+        <label asp-for="FirstName" class="form-label">Ім'я</label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+    <div class="mb-2">
+        <label asp-for="MiddleName" class="form-label">По батькові</label>
+        <input asp-for="MiddleName" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label asp-for="Address" class="form-label">Адреса</label>
+        <input asp-for="Address" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label asp-for="Phone" class="form-label">Телефон</label>
+        <input asp-for="Phone" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label asp-for="BirthDate" class="form-label">Дата народження</label>
+        <input asp-for="BirthDate" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Scholarship" class="form-label">Стипендія</label>
+        <input asp-for="Scholarship" class="form-control" />
+        <span asp-validation-for="Scholarship" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Зберегти</button>
+    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+</form>

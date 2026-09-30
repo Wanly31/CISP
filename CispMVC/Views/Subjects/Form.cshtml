@@ -1,0 +1,23 @@
+@model Subjects
+@{
+    ViewData["Title"] = Model.Id == 0 ? "Новий предмет" : "Редагування предмета";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Save" method="post" style="max-width: 500px">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-2">
+        <label asp-for="SubjectName" class="form-label">Назва</label>
+        <input asp-for="SubjectName" class="form-control" />
+        <span asp-validation-for="SubjectName" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="TeacherId" class="form-label">Викладач</label>
+        <select asp-for="TeacherId" asp-items="ViewBag.Teachers" class="form-select"></select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Зберегти</button>
+    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+</form>

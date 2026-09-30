@@ -1,0 +1,37 @@
+@model List<Grades>
+@{
+    ViewData["Title"] = "Оцінки";
+}
+
+<h2>Оцінки</h2>
+
+<a asp-action="Create" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Студент</th>
+            <th>Предмет</th>
+            <th>Дата іспиту</th>
+            <th>Оцінка</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var g in Model)
+        {
+            <tr>
+                <td>@g.Student?.LastName @g.Student?.FirstName</td>
+                <td>@g.Subject?.SubjectName</td>
+                <td>@g.ExamDate.ToString("dd.MM.yyyy")</td>
+                <td>@g.Grade</td>
+                <td class="text-nowrap">
+                    <a asp-action="Edit" asp-route-id="@g.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <form asp-action="Delete" asp-route-id="@g.Id" method="post" class="d-inline" onsubmit="return confirm('Видалити?')">
+                        <button class="btn btn-sm btn-outline-danger">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
