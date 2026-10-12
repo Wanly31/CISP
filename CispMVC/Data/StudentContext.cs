@@ -5,12 +5,22 @@ namespace CispMVC.Data
 {
     public class StudentContext : DbContext
     {
-        public StudentContext(DbContextOptions<StudentContext> dbContextOptions) : base(dbContextOptions)
-        {
+        private readonly string _connectionString;
 
+        public StudentContext()
+        {
+            _connectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ConnectString"]?.ConnectionString
+                ?? throw new InvalidOperationException("Не знайдено рядок підключення");
         }
 
-        
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlServer(_connectionString);
+            }
+        }
+
         public DbSet<Students> Students { get; set; }
         public DbSet<Grades> Grades { get; set; }
         public DbSet<Subjects> Subjects { get; set; }
