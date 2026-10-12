@@ -1,0 +1,15 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Головна";
+}
+
+<div class="text-center">
+    <h1 class="display-5">Успішність студентів</h1>
+    <p class="mt-3">
+        <a asp-page="/Students/Index" class="btn btn-outline-primary m-1">Студенти</a>
+        <a asp-page="/Teachers/Index" class="btn btn-outline-primary m-1">Викладачі</a>
+        <a asp-page="/Subjects/Index" class="btn btn-outline-primary m-1">Предмети</a>
+        <a asp-page="/Grades/Index" class="btn btn-outline-primary m-1">Оцінки</a>
+    </p>
+</div>

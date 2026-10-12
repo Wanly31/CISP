@@ -1,0 +1,41 @@
+@page
+@model CispRazor.Pages.Teachers.IndexModel
+@{
+    ViewData["Title"] = "Викладачі";
+}
+
+<h2>Викладачі</h2>
+
+@if (Model.Error != null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<a asp-page="Edit" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Прізвище</th>
+            <th>Ім'я</th>
+            <th>По батькові</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in Model.Teachers)
+        {
+            <tr>
+                <td>@t.LastName</td>
+                <td>@t.FirstName</td>
+                <td>@t.MiddleName</td>
+                <td class="text-nowrap">
+                    <a asp-page="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <form asp-page-handler="Delete" asp-route-id="@t.Id" method="post" class="d-inline" onsubmit="return confirm('Видалити?')">
+                        <button class="btn btn-sm btn-outline-danger">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

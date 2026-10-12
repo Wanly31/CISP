@@ -1,0 +1,49 @@
+@page
+@model CispRazor.Pages.Students.IndexModel
+@{
+    ViewData["Title"] = "Студенти";
+}
+
+<h2>Студенти</h2>
+
+@if (Model.Error != null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<a asp-page="Edit" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Прізвище</th>
+            <th>Ім'я</th>
+            <th>По батькові</th>
+            <th>Адреса</th>
+            <th>Телефон</th>
+            <th>Дата народження</th>
+            <th>Стипендія</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model.Students)
+        {
+            <tr>
+                <td>@s.LastName</td>
+                <td>@s.FirstName</td>
+                <td>@s.MiddleName</td>
+                <td>@s.Address</td>
+                <td>@s.Phone</td>
+                <td>@s.BirthDate.ToString("dd.MM.yyyy")</td>
+                <td>@s.Scholarship.ToString("N2")</td>
+                <td class="text-nowrap">
+                    <a asp-page="Edit" asp-route-id="@s.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <form asp-page-handler="Delete" asp-route-id="@s.Id" method="post" class="d-inline" onsubmit="return confirm('Видалити?')">
+                        <button class="btn btn-sm btn-outline-danger">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

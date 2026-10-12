@@ -1,0 +1,36 @@
+@page "{id:int?}"
+@model CispRazor.Pages.Grades.EditModel
+@{
+    ViewData["Title"] = Model.Grade.Id == 0 ? "Нова оцінка" : "Редагування оцінки";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form method="post" style="max-width: 500px">
+    <input type="hidden" asp-for="Grade.Id" />
+
+    <div class="mb-2">
+        <label asp-for="Grade.StudentId" class="form-label">Студент</label>
+        <select asp-for="Grade.StudentId" asp-items="Model.Students" class="form-select"></select>
+    </div>
+    <div class="mb-2">
+        <label asp-for="Grade.SubjectId" class="form-label">Предмет</label>
+        <select asp-for="Grade.SubjectId" asp-items="Model.Subjects" class="form-select"></select>
+    </div>
+    <div class="mb-2">
+        <label asp-for="Grade.ExamDate" class="form-label">Дата іспиту</label>
+        <input asp-for="Grade.ExamDate" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Grade.Grade" class="form-label">Оцінка</label>
+        <input asp-for="Grade.Grade" class="form-control" />
+        <span asp-validation-for="Grade.Grade" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Зберегти</button>
+    <a asp-page="Index" class="btn btn-secondary">Назад</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
