@@ -1,0 +1,61 @@
+@page "/teachers/edit/{Id:int?}"
+@rendermode InteractiveServer
+@inject StudentContext Db
+@inject NavigationManager Nav
+
+<PageTitle>@title</PageTitle>
+
+<h2>@title</h2>
+
+<EditForm Model="teacher" OnValidSubmit="Save" style="max-width: 500px">
+    <DataAnnotationsValidator />
+
+    <div class="mb-2">
+        <label class="form-label">Прізвище</label>
+        <InputText @bind-Value="teacher.LastName" class="form-control" />
+        <ValidationMessage For="() => teacher.LastName" class="text-danger" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Ім'я</label>
+        <InputText @bind-Value="teacher.FirstName" class="form-control" />
+        <ValidationMessage For="() => teacher.FirstName" class="text-danger" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">По батькові</label>
+        <InputText @bind-Value="teacher.MiddleName" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Зберегти</button>
+    <a href="teachers" class="btn btn-secondary">Назад</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Models.Teachers teacher = new();
+
+    private string title => teacher.Id == 0 ? "Новий викладач" : "Редагування викладача";
+
+    protected override void OnInitialized()
+    {
+        if (Id == null) return;
+
+        var found = Db.Teachers.AsNoTracking().FirstOrDefault(t => t.Id == Id);
+        if (found == null)
+        {
+            Nav.NotFound();
+            return;
+        }
+        teacher = found;
+    }
+
+    private void Save()
+    {
+        if (teacher.Id == 0) Db.Teachers.Add(teacher);
+        else Db.Teachers.Update(teacher);
+        Db.SaveChanges();
+        Db.ChangeTracker.Clear();
+        Nav.NavigateTo("teachers");
+    }
+}

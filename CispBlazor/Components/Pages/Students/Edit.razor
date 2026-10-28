@@ -1,0 +1,78 @@
+@page "/students/edit/{Id:int?}"
+@rendermode InteractiveServer
+@inject StudentContext Db
+@inject NavigationManager Nav
+
+<PageTitle>@title</PageTitle>
+
+<h2>@title</h2>
+
+<EditForm Model="student" OnValidSubmit="Save" style="max-width: 500px">
+    <DataAnnotationsValidator />
+
+    <div class="mb-2">
+        <label class="form-label">Прізвище</label>
+        <InputText @bind-Value="student.LastName" class="form-control" />
+        <ValidationMessage For="() => student.LastName" class="text-danger" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Ім'я</label>
+        <InputText @bind-Value="student.FirstName" class="form-control" />
+        <ValidationMessage For="() => student.FirstName" class="text-danger" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">По батькові</label>
+        <InputText @bind-Value="student.MiddleName" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Адреса</label>
+        <InputText @bind-Value="student.Address" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Телефон</label>
+        <InputText @bind-Value="student.Phone" class="form-control" />
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Дата народження</label>
+        <InputDate @bind-Value="student.BirthDate" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Стипендія</label>
+        <InputNumber @bind-Value="student.Scholarship" class="form-control" />
+        <ValidationMessage For="() => student.Scholarship" class="text-danger" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Зберегти</button>
+    <a href="students" class="btn btn-secondary">Назад</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Models.Students student = new() { BirthDate = new DateTime(2005, 1, 1) };
+
+    private string title => student.Id == 0 ? "Новий студент" : "Редагування студента";
+
+    protected override void OnInitialized()
+    {
+        if (Id == null) return;
+
+        var found = Db.Students.AsNoTracking().FirstOrDefault(s => s.Id == Id);
+        if (found == null)
+        {
+            Nav.NotFound();
+            return;
+        }
+        student = found;
+    }
+
+    private void Save()
+    {
+        if (student.Id == 0) Db.Students.Add(student);
+        else Db.Students.Update(student);
+        Db.SaveChanges();
+        Db.ChangeTracker.Clear();
+        Nav.NavigateTo("students");
+    }
+}

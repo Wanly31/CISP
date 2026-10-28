@@ -1,0 +1,79 @@
+@page "/students"
+@rendermode InteractiveServer
+@inject StudentContext Db
+@inject IJSRuntime JS
+
+<PageTitle>Студенти</PageTitle>
+
+<h2>Студенти</h2>
+
+@if (error != null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<a href="students/edit" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Прізвище</th>
+            <th>Ім'я</th>
+            <th>По батькові</th>
+            <th>Адреса</th>
+            <th>Телефон</th>
+            <th>Дата народження</th>
+            <th>Стипендія</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in students)
+        {
+            <tr>
+                <td>@s.LastName</td>
+                <td>@s.FirstName</td>
+                <td>@s.MiddleName</td>
+                <td>@s.Address</td>
+                <td>@s.Phone</td>
+                <td>@s.BirthDate.ToString("dd.MM.yyyy")</td>
+                <td>@s.Scholarship.ToString("N2")</td>
+                <td class="text-nowrap">
+                    <a href="students/edit/@s.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(s.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Models.Students> students = new();
+    private string? error;
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        students = Db.Students.AsNoTracking().OrderBy(s => s.LastName).ToList();
+    }
+
+    private async Task Delete(int id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "Видалити?")) return;
+
+        error = null;
+        try
+        {
+            Db.Students.Where(s => s.Id == id).ExecuteDelete();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException)
+        {
+            error = "Неможливо видалити студента, у якого є оцінки.";
+        }
+        Load();
+    }
+}

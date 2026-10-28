@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Cisp/Cisp.csproj" Id="b30305f0-12e9-459e-bfe6-a31d205219eb" />
+  <Project Path="CispBlazor/CispBlazor.csproj" Id="c3cc9ba9-62d5-4b4d-a2a7-cc681341a0c9" />
   <Project Path="CispMVC/CispMVC.csproj" Id="52a98ebb-8842-4567-918d-c38cd9bff510" />
   <Project Path="CispRazor/CispRazor.csproj" />
 </Solution>

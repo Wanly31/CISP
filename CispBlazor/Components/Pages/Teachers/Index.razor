@@ -1,0 +1,71 @@
+@page "/teachers"
+@rendermode InteractiveServer
+@inject StudentContext Db
+@inject IJSRuntime JS
+
+<PageTitle>Викладачі</PageTitle>
+
+<h2>Викладачі</h2>
+
+@if (error != null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<a href="teachers/edit" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Прізвище</th>
+            <th>Ім'я</th>
+            <th>По батькові</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var t in teachers)
+        {
+            <tr>
+                <td>@t.LastName</td>
+                <td>@t.FirstName</td>
+                <td>@t.MiddleName</td>
+                <td class="text-nowrap">
+                    <a href="teachers/edit/@t.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(t.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Models.Teachers> teachers = new();
+    private string? error;
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        teachers = Db.Teachers.AsNoTracking().OrderBy(t => t.LastName).ToList();
+    }
+
+    private async Task Delete(int id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "Видалити?")) return;
+
+        error = null;
+        try
+        {
+            Db.Teachers.Where(t => t.Id == id).ExecuteDelete();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException)
+        {
+            error = "Неможливо видалити викладача, який веде предмети.";
+        }
+        Load();
+    }
+}

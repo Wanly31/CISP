@@ -1,0 +1,63 @@
+@page "/grades"
+@rendermode InteractiveServer
+@inject StudentContext Db
+@inject IJSRuntime JS
+
+<PageTitle>Оцінки</PageTitle>
+
+<h2>Оцінки</h2>
+
+<a href="grades/edit" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Студент</th>
+            <th>Предмет</th>
+            <th>Дата іспиту</th>
+            <th>Оцінка</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var g in grades)
+        {
+            <tr>
+                <td>@g.Student?.LastName @g.Student?.FirstName</td>
+                <td>@g.Subject?.SubjectName</td>
+                <td>@g.ExamDate.ToString("dd.MM.yyyy")</td>
+                <td>@g.Grade</td>
+                <td class="text-nowrap">
+                    <a href="grades/edit/@g.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(g.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Models.Grades> grades = new();
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        grades = Db.Grades.AsNoTracking()
+            .Include(g => g.Student)
+            .Include(g => g.Subject)
+            .OrderByDescending(g => g.ExamDate)
+            .ToList();
+    }
+
+    private async Task Delete(int id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "Видалити?")) return;
+
+        Db.Grades.Where(g => g.Id == id).ExecuteDelete();
+        Load();
+    }
+}

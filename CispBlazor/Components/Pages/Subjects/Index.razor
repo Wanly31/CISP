@@ -1,0 +1,69 @@
+@page "/subjects"
+@rendermode InteractiveServer
+@inject StudentContext Db
+@inject IJSRuntime JS
+
+<PageTitle>Предмети</PageTitle>
+
+<h2>Предмети</h2>
+
+@if (error != null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<a href="subjects/edit" class="btn btn-primary mb-3">Додати</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Назва</th>
+            <th>Викладач</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var s in subjects)
+        {
+            <tr>
+                <td>@s.SubjectName</td>
+                <td>@s.Teacher?.LastName @s.Teacher?.FirstName</td>
+                <td class="text-nowrap">
+                    <a href="subjects/edit/@s.Id" class="btn btn-sm btn-outline-secondary">Редагувати</a>
+                    <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(s.Id)">Видалити</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Models.Subjects> subjects = new();
+    private string? error;
+
+    protected override void OnInitialized()
+    {
+        Load();
+    }
+
+    private void Load()
+    {
+        subjects = Db.Subjects.AsNoTracking().Include(s => s.Teacher).OrderBy(s => s.SubjectName).ToList();
+    }
+
+    private async Task Delete(int id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "Видалити?")) return;
+
+        error = null;
+        try
+        {
+            Db.Subjects.Where(s => s.Id == id).ExecuteDelete();
+        }
+        catch (Microsoft.Data.SqlClient.SqlException)
+        {
+            error = "Неможливо видалити предмет, з якого є оцінки.";
+        }
+        Load();
+    }
+}
