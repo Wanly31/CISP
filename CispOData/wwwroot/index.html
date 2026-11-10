@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <title>CispOData</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+</head>
+<body>
+    <nav class="navbar navbar-expand navbar-light bg-white border-bottom mb-3">
+        <div class="container">
+            <span class="navbar-brand">CispOData</span>
+            <div class="navbar-nav">
+                <a class="nav-link" href="#Students">Студенти</a>
+                <a class="nav-link" href="#Teachers">Викладачі</a>
+                <a class="nav-link" href="#Subjects">Предмети</a>
+                <a class="nav-link" href="#Grades">Оцінки</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 id="title"></h2>
+
+        <button id="addBtn" class="btn btn-primary mb-3">Додати</button>
+
+        <form id="form" class="card card-body mb-3" style="max-width: 500px" hidden>
+            <h5 id="formTitle"></h5>
+            <div id="fields"></div>
+            <div>
+                <button type="submit" class="btn btn-primary">Зберегти</button>
+                <button type="button" id="cancelBtn" class="btn btn-secondary">Скасувати</button>
+            </div>
+        </form>
+
+        <div id="error" class="alert alert-danger" hidden></div>
+
+        <table class="table table-striped">
+            <thead id="head"></thead>
+            <tbody id="body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const date = d => new Date(d).toLocaleDateString("uk-UA");
+        const fullName = p => p ? p.LastName + " " + p.FirstName : "";
+
+        // Для кожної таблиці:
+        //   url     - OData-запит для списку
+        //   columns - колонки таблиці: [назва, як взяти значення]
+        //   fields  - поля форми додавання: [властивість, підпис, тип]
+        //             тип: "text", "number", "date" або { set, text } для випадаючого списку
+        const pages = {
+            Students: {
+                title: "Студенти",
+                url: "/odata/Students?$orderby=LastName",
+                columns: [
+                    ["Прізвище", s => s.LastName],
+                    ["Ім'я", s => s.FirstName],
+                    ["По батькові", s => s.MiddleName],
+                    ["Адреса", s => s.Address],
+                    ["Телефон", s => s.Phone],
+                    ["Дата народження", s => date(s.BirthDate)],
+                    ["Стипендія", s => s.Scholarship]
+                ],
+                fields: [
+                    ["LastName", "Прізвище", "text"],
+                    ["FirstName", "Ім'я", "text"],
+                    ["MiddleName", "По батькові", "text"],
+                    ["Address", "Адреса", "text"],
+                    ["Phone", "Телефон", "text"],
+                    ["BirthDate", "Дата народження", "date"],
+                    ["Scholarship", "Стипендія", "number"]
+                ]
+            },
+            Teachers: {
+                title: "Викладачі",
+                url: "/odata/Teachers?$orderby=LastName",
+                columns: [
+                    ["Прізвище", t => t.LastName],
+                    ["Ім'я", t => t.FirstName],
+                    ["По батькові", t => t.MiddleName]
+                ],
+                fields: [
+                    ["LastName", "Прізвище", "text"],
+                    ["FirstName", "Ім'я", "text"],
+                    ["MiddleName", "По батькові", "text"]
+                ]
+            },
+            Subjects: {
+                title: "Предмети",
+                url: "/odata/Subjects?$expand=Teacher&$orderby=SubjectName",
+                columns: [
+                    ["Предмет", s => s.SubjectName],
+                    ["Викладач", s => fullName(s.Teacher)]
+                ],
+                fields: [
+                    ["SubjectName", "Предмет", "text"],
+                    ["TeacherId", "Викладач", { set: "Teachers", text: fullName }]
+                ]
+            },
+            Grades: {
+                title: "Оцінки",
+                url: "/odata/Grades?$expand=Student,Subject&$orderby=ExamDate desc",
+                columns: [
+                    ["Студент", g => fullName(g.Student)],
+                    ["Предмет", g => g.Subject?.SubjectName],
+                    ["Дата іспиту", g => date(g.ExamDate)],
+                    ["Оцінка", g => g.Grade]
+                ],
+                fields: [
+                    ["StudentId", "Студент", { set: "Students", text: fullName }],
+                    ["SubjectId", "Предмет", { set: "Subjects", text: s => s.SubjectName }],
+                    ["ExamDate", "Дата іспиту", "date"],
+                    ["Grade", "Оцінка", "number"]
+                ]
+            }
+        };
+
+        const $ = id => document.getElementById(id);
+        let name, page;
+        let editId = null; // null - додаємо новий запис, число - редагуємо запис з цим Id
+
+        function showError(text) {
+            $("error").textContent = text;
+            $("error").hidden = !text;
+        }
+
+        // Завантажує список і малює таблицю.
+        async function load() {
+            name = pages[location.hash.slice(1)] ? location.hash.slice(1) : "Students";
+            page = pages[name];
+            $("title").textContent = page.title;
+            $("form").hidden = true;
+            showError("");
+
+            $("head").innerHTML = "<tr>" + page.columns.map(c => "<th>" + c[0] + "</th>").join("") + "<th></th></tr>";
+
+            const data = await (await fetch(page.url)).json();
+
+            $("body").innerHTML = "";
+            for (const row of data.value) {
+                const tr = $("body").insertRow();
+                for (const c of page.columns) tr.insertCell().textContent = c[1](row) ?? "";
+
+                const cell = tr.insertCell();
+                cell.className = "text-nowrap";
+
+                const edit = document.createElement("button");
+                edit.className = "btn btn-sm btn-outline-secondary me-1";
+                edit.textContent = "Редагувати";
+                edit.onclick = () => openForm(row);
+                cell.appendChild(edit);
+
+                const del = document.createElement("button");
+                del.className = "btn btn-sm btn-outline-danger";
+                del.textContent = "Видалити";
+                del.onclick = () => remove(row.Id);
+                cell.appendChild(del);
+            }
+        }
+
+        // Будує форму. Без row - порожня форма для додавання,
+        // з row - заповнена значеннями цього запису для редагування.
+        // Для випадаючих списків підтягує дані з OData.
+        async function openForm(row) {
+            editId = row ? row.Id : null;
+            $("formTitle").textContent = row ? "Редагування" : "Додавання";
+            $("fields").innerHTML = "";
+            for (const [prop, label, type] of page.fields) {
+                const div = document.createElement("div");
+                div.className = "mb-3";
+                div.innerHTML = `<label class="form-label">${label}</label>`;
+
+                let input;
+                if (typeof type === "object") {
+                    input = document.createElement("select");
+                    input.className = "form-select";
+                    const list = await (await fetch("/odata/" + type.set)).json();
+                    for (const item of list.value) input.add(new Option(type.text(item), item.Id));
+                } else {
+                    input = document.createElement("input");
+                    input.className = "form-control";
+                    input.type = type;
+                    if (type === "number") input.step = "any";
+                }
+                input.name = prop;
+                if (row && row[prop] != null)
+                    input.value = type === "date" ? row[prop].slice(0, 10) : row[prop];
+                div.appendChild(input);
+                $("fields").appendChild(div);
+            }
+            $("form").hidden = false;
+        }
+
+        // POST /odata/<Таблиця> з JSON-тілом.
+        async function save(e) {
+            e.preventDefault();
+            const item = {};
+            for (const [prop, , type] of page.fields) {
+                const value = $("form").elements[prop].value;
+                if (value === "") continue;
+                if (type === "date") item[prop] = new Date(value + "T00:00").toISOString();
+                else if (type === "text") item[prop] = value;
+                else item[prop] = Number(value);
+            }
+
+            // Додавання:   POST /odata/Grades
+            // Редагування: PUT  /odata/Grades(5)
+            const url = editId === null ? `/odata/${name}` : `/odata/${name}(${editId})`;
+            const resp = await fetch(url, {
+                method: editId === null ? "POST" : "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(item)
+            });
+            if (!resp.ok) return showError("Помилка: " + await resp.text());
+            load();
+        }
+
+        // DELETE /odata/<Таблиця>(id)
+        async function remove(id) {
+            if (!confirm("Видалити?")) return;
+            const resp = await fetch(`/odata/${name}(${id})`, { method: "DELETE" });
+            if (!resp.ok) return showError(await resp.text());
+            load();
+        }
+
+        $("addBtn").onclick = () => openForm();
+        $("cancelBtn").onclick = () => $("form").hidden = true;
+        $("form").onsubmit = save;
+        window.onhashchange = load;
+        load();
+    </script>
+</body>
+</html>

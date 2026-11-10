@@ -31,32 +31,32 @@ namespace Cisp
     ("Address", 180), ("Phone", 100), ("Birth Date", 90), ("Scholarship", 90));
 
             using (var db = new StudentContext())
-            
-                {
+
+            {
 
                 var students = db.Students.OrderBy(x => x.LastName).ToList();
-                    lstStudents.Items.Clear();
+                lstStudents.Items.Clear();
 
-                    foreach (var student in students)
-                    {
-                        ListViewItem item = new ListViewItem(student.Id.ToString());
-                        item.SubItems.Add(student.LastName.ToString());
-                        item.SubItems.Add(student.FirstName.ToString());
-                        item.SubItems.Add(student.MiddleName.ToString());
-                        item.SubItems.Add(student.Address.ToString());
-                        item.SubItems.Add(student.Phone.ToString());
-                        item.SubItems.Add(student.BirthDate.ToString("dd.MM.yyyy"));
+                foreach (var student in students)
+                {
+                    ListViewItem item = new ListViewItem(student.Id.ToString());
+                    item.SubItems.Add(student.LastName.ToString());
+                    item.SubItems.Add(student.FirstName.ToString());
+                    item.SubItems.Add(student.MiddleName.ToString());
+                    item.SubItems.Add(student.Address.ToString());
+                    item.SubItems.Add(student.Phone.ToString());
+                    item.SubItems.Add(student.BirthDate.ToString("dd.MM.yyyy"));
 
-                        decimal scholarship = Convert.ToDecimal(student.Scholarship);
-                        item.SubItems.Add(scholarship.ToString("N2"));
-                        if (scholarship == 0)
-                            item.ForeColor = Color.Gray;
+                    decimal scholarship = Convert.ToDecimal(student.Scholarship);
+                    item.SubItems.Add(scholarship.ToString("N2"));
+                    if (scholarship == 0)
+                        item.ForeColor = Color.Gray;
 
-                        lstStudents.Items.Add(item);
-                    }
+                    lstStudents.Items.Add(item);
                 }
             }
-        
+        }
+
 
         private void LoadTeachers()
         {
@@ -88,13 +88,13 @@ namespace Cisp
                 ("ID", 40), ("Subject", 180), ("Teacher", 180));
 
 
-            using(var db = new StudentContext())
+            using (var db = new StudentContext())
             {
                 var subjects = db.Subjects.Include(s => s.Teacher).ToList();
 
                 lstSubjects.Items.Clear();
 
-                foreach(var subject in subjects)
+                foreach (var subject in subjects)
                 {
                     ListViewItem item = new ListViewItem(subject.Id.ToString());
                     item.SubItems.Add(subject.SubjectName.ToString());
@@ -102,7 +102,7 @@ namespace Cisp
                     lstSubjects.Items.Add(item);
                 }
             }
-            
+
         }
 
 
@@ -111,7 +111,7 @@ namespace Cisp
             SetupColumns(lstGrades,
                 ("ID", 40), ("Student", 160), ("Subject", 140), ("Exam Date", 90), ("Grade", 60));
 
-            using(var db = new StudentContext())
+            using (var db = new StudentContext())
             {
                 var grades = db.Grades.
                     Include(s => s.Student).
@@ -121,7 +121,7 @@ namespace Cisp
 
                 lstGrades.Items.Clear();
 
-                foreach(var grade in grades)
+                foreach (var grade in grades)
                 {
                     ListViewItem item = new ListViewItem(grade.Id.ToString());
                     item.SubItems.Add(grade.Student.LastName + " " + grade.Student.FirstName.ToString());
@@ -140,9 +140,9 @@ namespace Cisp
                 }
             }
 
-            
-            
-        
+
+
+
         }
         private void LoadReport()
         {

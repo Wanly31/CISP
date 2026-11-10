@@ -1,0 +1,18 @@
+@host = http://localhost:5281
+
+GET {{host}}/odata/Grades?$expand=Student,Subject
+Accept: application/json
+
+###
+
+GET {{host}}/odata/Grades?$filter=Grade eq 5&$orderby=ExamDate desc
+Accept: application/json
+
+###
+
+GET {{host}}/odata/Students?$select=LastName,FirstName,Scholarship&$top=5&$count=true
+Accept: application/json
+
+###
+
+GET {{host}}/odata/$metadata
